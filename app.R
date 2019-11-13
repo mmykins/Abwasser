@@ -9,42 +9,40 @@
 
 library(shiny)
 library(tidyverse)
+library(DT)
 
-# Define UI for application that draws a histogram
-ui <- fluidPage(
-
-    # Application title
-    titlePanel("Old Faithful Geyser Data"),
-
-    # Sidebar with a slider input for number of bins 
-    sidebarLayout(
-        sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
-        ),
-
-        # Show a plot of the generated distribution
-        mainPanel(
-           plotOutput("distPlot")
-        )
-    )
+# Define UI
+ui <- shinyUI(fluidPage(
+    
+    fileInput('target_upload', 'Choose file to upload',
+              accept = c(
+                  'text/csv',
+                  'text/comma-separated-values',
+                  '.csv'
+              )),
+    radioButtons("separator","Separator: ",choices = c(";",",",":"), selected=";",inline=TRUE),
+    DT::dataTableOutput("sample_table")
+)
 )
 
-# Define server logic required to draw a histogram
-server <- function(input, output) {
-
-    output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white')
+# Define server logic
+server <- shinyServer(function(input, output) {
+    
+    df_products_upload <- reactive({
+        inFile <- input$target_upload
+        if (is.null(inFile))
+            return(NULL)
+        df <- read.csv(inFile$datapath, header = TRUE,sep = input$separator)
+        return(df)
     })
+    
+    output$sample_table<- DT::renderDataTable({
+        df <- df_products_upload()
+        DT::datatable(df)
+    })
+    
 }
+)
 
 # Run the application 
 shinyApp(ui = ui, server = server)
