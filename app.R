@@ -1,5 +1,7 @@
 library(shiny)
+library(plotly)
 library(datasets)
+
 
 ui <- shinyUI(fluidPage(
     titlePanel("Column Plot"),
@@ -8,6 +10,7 @@ ui <- shinyUI(fluidPage(
                  titlePanel("Uploading Files"),
                  sidebarLayout(
                      sidebarPanel(
+                         
                          fileInput('file1', 'Choose CSV File',
                                    accept=c('text/csv', 
                                             'text/comma-separated-values,text/plain', 
@@ -26,14 +29,14 @@ ui <- shinyUI(fluidPage(
                                       c(None='',
                                         'Double Quote'='"',
                                         'Single Quote'="'"),
-                                      '"')
-                         
+                                      '"'),
                      ),
                      mainPanel(
                          tableOutput('contents')
                      )
                  )
         ),
+        
         tabPanel("First Type",
                  pageWithSidebar(
                      headerPanel('My First Plot'),
@@ -42,10 +45,10 @@ ui <- shinyUI(fluidPage(
                          # "Empty inputs" - they will be updated after the data is uploaded
                          selectInput('xcol', 'X Variable', ""),
                          selectInput('ycol', 'Y Variable', "", selected = "")
-                         
                      ),
+                     
                      mainPanel(
-                         plotOutput('MyPlot')
+                         plotlyOutput('trendPlot', height = "900px")
                      )
                  )
         )
@@ -80,15 +83,29 @@ server <- shinyServer(function(input, output, session) {
                           choices = names(df), selected = names(df)[2])
         
         return(df)
+        
     })
     
     output$contents <- renderTable({
         data()
     })
     
-    output$MyPlot <- renderPlot({
-        x <- data()[, c(input$xcol, input$ycol)]
-        plot(x)
+    output$trendPlot <- renderPlotly({
+        
+        # build graph with ggplot syntax
+        p <- ggplot(data()) + 
+            geom_point(aes_string(x = input$xcol,
+                                  y = input$ycol,
+                                  group = id,
+                                  color = id)
+                
+            )
+        
+        ggplotly(p) %>% 
+            layout(height = input$plotHeight, autosize=TRUE)
+    # output$MyPlot <- renderPlot({
+        #x <- data()[, c(input$xcol, input$ycol)]
+        #plot(x)
         
     })
 })
