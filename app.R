@@ -93,13 +93,9 @@ server <- shinyServer(function(input, output, session) {
     output$trendPlot <- renderPlotly({
         
         # build graph with ggplot syntax
-        p <- ggplot(data()) + 
-            geom_point(aes_string(x = input$xcol,
-                                  y = input$ycol,
-                                  group = id,
-                                  color = id)
-                
-            )
+        p <- ggplot(data(), aes_string(x = input$xcol, y = input$ycol, color = "id")) + 
+            geom_point()
+            
         
         ggplotly(p) %>% 
             layout(height = input$plotHeight, autosize=TRUE)
