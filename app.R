@@ -2,11 +2,7 @@ library(shiny)
 library(plotly)
 library(datasets)
 
-min.wave <- min(df$Wavelength.nm)
-max.wave <- max(df$Wavelength.nm)
 
-#min.int <- min(data$Intensity)
-#max.int <- max(data$Intensity)
 
 ui <- shinyUI(fluidPage(
     titlePanel("Column Plot"),
@@ -50,13 +46,11 @@ ui <- shinyUI(fluidPage(
                          # "Empty inputs" - they will be updated after the data is uploaded
                          selectInput('xcol', 'X Variable', ""),
                          selectInput('ycol', 'Y Variable', "", selected = ""),
-                         sliderInput("wave.adjuster",
-                                     "Wavelngth",
-                                     min = min.wave,
-                                     max = max.wave,
-                                     value = c(min.wave, max.wave)),
-                         
-                         submitButton(text = "apply")
+                         p("The first slider controls the second"),
+                         sliderInput("control", "Controller:", min=0, max=20, value=10,
+                                     step=1),
+                         sliderInput("receive", "Receiver:", min=0, max=20, value=10,
+                                     step=1)
                      ),
                      
                      mainPanel(
@@ -72,17 +66,14 @@ ui <- shinyUI(fluidPage(
 server <- shinyServer(function(input, output, session) {
     # added "session" because updateSelectInput requires it
     
-    d_filt <- reactive({
-        
-        low.wave <- input$wave.adjuster[1]
-        hi.wave <- input$wave.adjuster[2]
-        
-        
-        #d_filt <- diamonds %>%
-        df %>%
-            filter(Wavelength.nm >= low.wave) %>%
-            filter(Wavelength.nm <= hi.wave)
+    observe({
+        val <- input$control
+        # Control the value, min, max, and step.
+        # Step size is 2 when input value is even; 1 when value is odd.
+        updateSliderInput(session, "receive", value = val,
+                          min = floor(val/2), max = val+4, step = (val+1)%%2 + 1)
     })
+    
     
     data <- reactive({ 
         req(input$file1) ## ?req #  require that the input is available
@@ -104,8 +95,13 @@ server <- shinyServer(function(input, output, session) {
                           choices = names(df), selected = names(df)[2])
         
         return(df)
-        
     })
+        
+  
+    
+    
+        
+
     
     output$contents <- renderTable({
         data()
@@ -120,9 +116,6 @@ server <- shinyServer(function(input, output, session) {
         
         ggplotly(p) %>% 
             layout(height = input$plotHeight, autosize=TRUE)
-    # output$MyPlot <- renderPlot({
-        #x <- data()[, c(input$xcol, input$ycol)]
-        #plot(x)
         
     })
 })
