@@ -2,6 +2,11 @@ library(shiny)
 library(plotly)
 library(datasets)
 
+min.wave <- min(df$Wavelength.nm)
+max.wave <- max(df$Wavelength.nm)
+
+#min.int <- min(data$Intensity)
+#max.int <- max(data$Intensity)
 
 ui <- shinyUI(fluidPage(
     titlePanel("Column Plot"),
@@ -44,11 +49,18 @@ ui <- shinyUI(fluidPage(
                          
                          # "Empty inputs" - they will be updated after the data is uploaded
                          selectInput('xcol', 'X Variable', ""),
-                         selectInput('ycol', 'Y Variable', "", selected = "")
+                         selectInput('ycol', 'Y Variable', "", selected = ""),
+                         sliderInput("wave.adjuster",
+                                     "Wavelngth",
+                                     min = min.wave,
+                                     max = max.wave,
+                                     value = c(min.wave, max.wave)),
+                         
+                         submitButton(text = "apply")
                      ),
                      
                      mainPanel(
-                         plotlyOutput('trendPlot', height = "900px")
+                         plotlyOutput('MyPlot', height = "900px")
                      )
                  )
         )
@@ -60,14 +72,23 @@ ui <- shinyUI(fluidPage(
 server <- shinyServer(function(input, output, session) {
     # added "session" because updateSelectInput requires it
     
+    d_filt <- reactive({
+        
+        low.wave <- input$wave.adjuster[1]
+        hi.wave <- input$wave.adjuster[2]
+        
+        
+        #d_filt <- diamonds %>%
+        df %>%
+            filter(Wavelength.nm >= low.wave) %>%
+            filter(Wavelength.nm <= hi.wave)
+    })
     
     data <- reactive({ 
         req(input$file1) ## ?req #  require that the input is available
         
         inFile <- input$file1 
-        
-        # tested with a following dataset: write.csv(mtcars, "mtcars.csv")
-        # and                              write.csv(iris, "iris.csv")
+    
         df <- read.csv(inFile$datapath, header = input$header, sep = input$sep,
                        quote = input$quote)
         
@@ -90,7 +111,7 @@ server <- shinyServer(function(input, output, session) {
         data()
     })
     
-    output$trendPlot <- renderPlotly({
+    output$MyPlot <- renderPlotly({
         
         # build graph with ggplot syntax
         p <- ggplot(data(), aes_string(x = input$xcol, y = input$ycol, color = "id")) + 
