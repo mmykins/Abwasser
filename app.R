@@ -2,7 +2,8 @@ library(shiny)
 library(plotly)
 library(datasets)
 
-
+min.x = 500
+max.x = 750
 
 ui <- shinyUI(fluidPage(
     titlePanel("Column Plot"),
@@ -68,8 +69,7 @@ server <- shinyServer(function(input, output, session) {
         req(input$file1) ## ?req #  require that the input is available
         inFile <- input$file1 
     
-        df <- read.csv(inFile$datapath, header = input$header, sep = input$sep,
-                       quote = input$quote)
+        df <- read.csv(inFile$datapath, header = input$header, sep = input$sep)
         
         
         # Update inputs (you could create an observer with both updateSel...)
@@ -85,14 +85,14 @@ server <- shinyServer(function(input, output, session) {
         low.x <- input$wave.adjuster[1]
         high.x <- input$wave.adjuster[2]
         
-        #observeEvent(input$sliderInput,
+        observeEvent(input$sliderInput,
                      
-            #{updateSliderInput(session, inputId = 'xcol')
-            #}
-       # )
+            {updateSliderInput(session, inputId = 'xcol')
+            }
+        )
                 
-        min.x = min(df$xcol)
-        max.x = max(df$xcol)
+        #min.x = min(df$xcol)
+        #max.x = max(df$xcol)
         
         return(df)
     })
