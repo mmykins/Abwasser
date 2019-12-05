@@ -26,11 +26,6 @@ ui <- shinyUI(fluidPage(
                                         Semicolon=';',
                                         Tab='\t'),
                                       ','),
-                         radioButtons('quote', 'Quote',
-                                      c(None='',
-                                        'Double Quote'='"',
-                                        'Single Quote'="'"),
-                                      '"'),
                      ),
                      mainPanel(
                          tableOutput('contents')
@@ -46,10 +41,12 @@ ui <- shinyUI(fluidPage(
                          # "Empty inputs" - they will be updated after the data is uploaded
                          selectInput('xcol', 'X Variable', ""),
                          selectInput('ycol', 'Y Variable', "", selected = ""),
-                         p("The first slider controls the second"),
-                         sliderInput("control", "Controller:", min=0, max=20, value=10,
-                                     step=1),
-                         sliderInput("receive", "Receiver:", min=0, max=20, value=10,
+                         p("Select desired X parameter"),
+                         sliderInput('wave.adjuster',
+                                     "Wavelength",
+                                     min = min.x,
+                                     max = max.x, 
+                                     value = c(min.x, max.x),
                                      step=1)
                      ),
                      
@@ -66,18 +63,9 @@ ui <- shinyUI(fluidPage(
 server <- shinyServer(function(input, output, session) {
     # added "session" because updateSelectInput requires it
     
-    observe({
-        val <- input$control
-        # Control the value, min, max, and step.
-        # Step size is 2 when input value is even; 1 when value is odd.
-        updateSliderInput(session, "receive", value = val,
-                          min = floor(val/2), max = val+4, step = (val+1)%%2 + 1)
-    })
-    
     
     data <- reactive({ 
         req(input$file1) ## ?req #  require that the input is available
-        
         inFile <- input$file1 
     
         df <- read.csv(inFile$datapath, header = input$header, sep = input$sep,
@@ -89,19 +77,26 @@ server <- shinyServer(function(input, output, session) {
         # variables you could set "choices = sapply(df, is.numeric)"
         # It depends on what do you want to do later on.
         
-        updateSelectInput(session, inputId = 'xcol', label = 'X Variable',
+        updateSelectInput(session, inputId = 'xcol', label = 'Select desired X parameter',
                           choices = names(df), selected = names(df))
-        updateSelectInput(session, inputId = 'ycol', label = 'Y Variable',
+        updateSelectInput(session, inputId = 'ycol', label = 'Select desired Y parameter',
                           choices = names(df), selected = names(df)[2])
+        
+        low.x <- input$wave.adjuster[1]
+        high.x <- input$wave.adjuster[2]
+        
+        #observeEvent(input$sliderInput,
+                     
+            #{updateSliderInput(session, inputId = 'xcol')
+            #}
+       # )
+                
+        min.x = min(df$xcol)
+        max.x = max(df$xcol)
         
         return(df)
     })
         
-  
-    
-    
-        
-
     
     output$contents <- renderTable({
         data()
