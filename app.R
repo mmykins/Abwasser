@@ -5,8 +5,11 @@
 
 #Author: Michael Mykins 
 
-# The Author acknowledges recommendations by Dr. Andrew Steen on Code style and syntax 
+# The Author acknowledges recommendations by Dr. Andrew Steen on Code style and syntax
 
+#################
+
+# loading the necessary packages for the code 
 
 library(shiny)
 library(plotly)
